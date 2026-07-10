@@ -43,11 +43,17 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_0609BBA0BA5B4C91B65E5D28C56E49FA }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_688B0A77F598422E82BE7611CEB440A5 }}
 
-      - name: 'Run Azure Functions Action'
-        uses: Azure/functions-action@v1
-        id: fa
+      - name: 'Create deployment package'
+        shell: pwsh
+        run: |
+          Push-Location output
+          $items = Get-ChildItem -Path . -Force
+          Compress-Archive -LiteralPath $items -DestinationPath ../deploy.zip -Force
+          Pop-Location
+
+      - name: 'Deploy to Azure Functions'
+        uses: azure/webapps-deploy@v3
         with:
           app-name: 'function-demo'
-          slot-name: 'Production'
-          package: '${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/output'
-          
+          package: ./deploy.zip
+          method: 'zipdeploy'
